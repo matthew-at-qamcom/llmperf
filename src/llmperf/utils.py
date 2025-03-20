@@ -60,8 +60,7 @@ def randomly_sample_sonnet_lines_prompt(
     prompt_tokens_mean: int = 550,
     prompt_tokens_stddev: int = 250,
     expect_output_tokens: int = 150,
-    tokenizer = LlamaTokenizerFast.from_pretrained(
-        "hf-internal-testing/llama-tokenizer")
+    tokenizer = None
 ) -> Tuple[str, int]:
     """Generate a prompt that randomly samples lines from a the shakespeare sonnet at sonnet.txt.
 
@@ -81,6 +80,11 @@ def randomly_sample_sonnet_lines_prompt(
     Returns:
         A tuple of the prompt and the length of the prompt.
     """
+    if tokenizer is None:
+        tokenizer = LlamaTokenizerFast.from_pretrained(
+            "hf-internal-testing/llama-tokenizer",
+            legacy=False
+        )
 
     get_token_length = lambda text: len(tokenizer.encode(text))
 

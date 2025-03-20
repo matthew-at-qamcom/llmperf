@@ -2,14 +2,18 @@ import json
 import os
 import time
 from typing import Any, Dict
+import logging
 
 import ray
 import requests
+import tiktoken
 
 from llmperf.ray_llm_client import LLMClient
 from llmperf.models import RequestConfig
 from llmperf import common_metrics
 
+
+logger = logging.getLogger(__name__)
 
 @ray.remote
 class OpenAIChatCompletionsClient(LLMClient):
@@ -28,11 +32,13 @@ class OpenAIChatCompletionsClient(LLMClient):
             "model": model,
             "messages": message,
             "stream": True,
+            "stream_options": {
+                "include_usage": True,
+            },
         }
         sampling_params = request_config.sampling_params
         body.update(sampling_params or {})
-        time_to_next_token = []
-        tokens_received = 0
+        times_to_next_token = []
         ttft = 0
         error_response_code = -1
         generated_text = ""
@@ -45,8 +51,12 @@ class OpenAIChatCompletionsClient(LLMClient):
         metrics[common_metrics.ERROR_CODE] = None
         metrics[common_metrics.ERROR_MSG] = ""
 
-        start_time = time.monotonic()
-        most_recent_received_token_time = time.monotonic()
+        output_start_time = None
+        most_recent_received_token_time = None
+        finish_reason = None
+        num_input_tokens = None
+        num_output_tokens = None
+        num_total_tokens = None
         address = os.environ.get("OPENAI_API_BASE")
         if not address:
             raise ValueError("the environment variable OPENAI_API_BASE must be set.")
@@ -59,6 +69,7 @@ class OpenAIChatCompletionsClient(LLMClient):
         if not address.endswith("/"):
             address = address + "/"
         address += "chat/completions"
+        start_time = time.monotonic()
         try:
             with requests.post(
                 address,
@@ -67,11 +78,18 @@ class OpenAIChatCompletionsClient(LLMClient):
                 timeout=180,
                 headers=headers,
             ) as response:
+                #import curlify
+                #curl_command = curlify.to_curl(response.request)
+                #print(curl_command)
+
                 if response.status_code != 200:
                     error_msg = response.text
                     error_response_code = response.status_code
                     response.raise_for_status()
                 for chunk in response.iter_lines(chunk_size=None):
+                    if output_start_time is None:
+                        output_start_time = time.monotonic()
+
                     chunk = chunk.strip()
 
                     if not chunk:
@@ -80,28 +98,42 @@ class OpenAIChatCompletionsClient(LLMClient):
                     chunk = chunk[len(stem) :]
                     if chunk == b"[DONE]":
                         continue
-                    tokens_received += 1
                     data = json.loads(chunk)
 
                     if "error" in data:
                         error_msg = data["error"]["message"]
                         error_response_code = data["error"]["code"]
                         raise RuntimeError(data["error"]["message"])
-                        
-                    delta = data["choices"][0]["delta"]
-                    if delta.get("content", None):
-                        if not ttft:
-                            ttft = time.monotonic() - start_time
-                            time_to_next_token.append(ttft)
-                        else:
-                            time_to_next_token.append(
-                                time.monotonic() - most_recent_received_token_time
-                            )
-                        most_recent_received_token_time = time.monotonic()
-                        generated_text += delta["content"]
 
-            total_request_time = time.monotonic() - start_time
-            output_throughput = tokens_received / total_request_time
+                    if len(data["choices"]) >= 1:
+                        choice_0 = data["choices"][0]
+                        delta = choice_0["delta"]
+                        if delta.get("content", None):
+                            this_token_received_time = time.monotonic()
+                            if most_recent_received_token_time is not None:
+                                times_to_next_token.append(
+                                    this_token_received_time - most_recent_received_token_time
+                                )
+
+                            most_recent_received_token_time = this_token_received_time
+                            generated_text += delta["content"]
+
+                        chunk_finish_reason = choice_0.get("finish_reason")
+                        if chunk_finish_reason is not None:
+                            finish_reason = chunk_finish_reason
+                            final_chunk = chunk
+
+                    usage = data.get("usage")
+                    if usage is not None:
+                        num_input_tokens = usage["prompt_tokens"]
+                        num_output_tokens = usage["completion_tokens"]
+                        num_total_tokens = usage["total_tokens"]
+
+            logger.debug("Finish reason: %s", finish_reason)
+            end_time = time.monotonic()
+            ttft = output_start_time - start_time
+            total_request_time = end_time - start_time
+            output_duration = end_time - output_start_time
 
         except Exception as e:
             metrics[common_metrics.ERROR_MSG] = error_msg
@@ -109,12 +141,35 @@ class OpenAIChatCompletionsClient(LLMClient):
             print(f"Warning Or Error: {e}")
             print(error_response_code)
 
-        metrics[common_metrics.INTER_TOKEN_LAT] = sum(time_to_next_token) #This should be same as metrics[common_metrics.E2E_LAT]. Leave it here for now
+        num_input_chars = len(prompt)
+        num_output_chars = len(generated_text)
+        metrics[common_metrics.NUM_INPUT_CHARS] = num_input_chars
+        metrics[common_metrics.NUM_OUTPUT_CHARS] = num_output_chars
+        metrics[common_metrics.NUM_TOTAL_CHARS] = num_input_chars + num_output_chars
+        metrics[common_metrics.NUM_INPUT_TOKENS] = num_input_tokens
+        metrics[common_metrics.NUM_OUTPUT_TOKENS] = num_output_tokens
+        metrics[common_metrics.NUM_TOTAL_TOKENS] = num_total_tokens
         metrics[common_metrics.TTFT] = ttft
+        metrics[common_metrics.OUTPUT_DURATION] = output_duration
         metrics[common_metrics.E2E_LAT] = total_request_time
-        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT] = output_throughput
-        metrics[common_metrics.NUM_TOTAL_TOKENS] = tokens_received + prompt_len
-        metrics[common_metrics.NUM_OUTPUT_TOKENS] = tokens_received
-        metrics[common_metrics.NUM_INPUT_TOKENS] = prompt_len
+
+        if num_output_tokens:
+            metrics[common_metrics.INTER_TOKEN_LAT] = (
+                output_duration / num_output_tokens
+            )
+        else:
+            metrics[common_metrics.INTER_TOKEN_LAT] = None
+        metrics[common_metrics.REQ_INPUT_THROUGHPUT_CHARS] = (
+            num_input_chars / ttft
+        )
+        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_CHARS] = (
+            num_output_chars / output_duration
+        )
+        metrics[common_metrics.REQ_INPUT_THROUGHPUT_TOKENS] = (
+            num_input_tokens / ttft
+        )
+        metrics[common_metrics.REQ_OUTPUT_THROUGHPUT_TOKENS] = (
+            num_output_tokens / output_duration
+        )
 
         return metrics, generated_text, request_config

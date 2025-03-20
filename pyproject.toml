@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A framework for load testing LLM APIs"
 authors = [{name="Avnish Narayan", email="avnish@anyscale.com"}]
 license = {text= "Apache-2.0"}
-requires-python = ">=3.8, <3.11"
+#requires-python = ">=3.8, <3.11"
 dependencies = ["pydantic<2.5",
                 "ray", 
                 "pytest>=6.0", 
