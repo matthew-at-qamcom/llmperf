@@ -1,0 +1,28 @@
+[
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.13581928506027907,
+        "total_output_time_s": 4.10262994794175,
+        "end_to_end_latency_s": 4.238449233002029,
+        "inter_token_latency_s": 0.00972187191455391,
+        "number_input_chars": 246,
+        "number_output_chars": 422,
+        "number_total_chars": 668,
+        "request_input_throughput_chars_per_s": 1811.230267416153,
+        "request_output_throughput_chars_per_s": 102.860849102833
+    },
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.1577788059366867,
+        "total_output_time_s": 4.10632780904416,
+        "end_to_end_latency_s": 4.264106614980847,
+        "inter_token_latency_s": 0.009847308894590312,
+        "number_input_chars": 273,
+        "number_output_chars": 417,
+        "number_total_chars": 690,
+        "request_input_throughput_chars_per_s": 1730.2704148334672,
+        "request_output_throughput_chars_per_s": 101.55058714054934
+    }
+]

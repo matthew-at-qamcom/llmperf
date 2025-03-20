@@ -1,0 +1,18 @@
+{
+    "version": "2023-08-31",
+    "name": "accounts-fireworks-models-llama-v3p1-8b-instruct_1000_1000_summary",
+    "model": "accounts/fireworks/models/llama-v3p1-8b-instruct",
+    "mean_input_tokens": 1000,
+    "stddev_input_tokens": 0,
+    "mean_output_tokens": 1000,
+    "stddev_output_tokens": 0,
+    "num_concurrent_requests": 1,
+    "results_num_requests_started": 1,
+    "results_error_rate": 0.0,
+    "results_number_errors": 0,
+    "results_error_code_frequency": "{}",
+    "results_mean_output_throughput_token_per_s": 5.092660058866592,
+    "results_num_completed_requests": 1,
+    "results_num_completed_requests_per_min": 3.8194950441499436,
+    "timestamp": 1741831743
+}

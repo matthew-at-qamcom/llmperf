@@ -1,0 +1,54 @@
+[
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.1650054360507056,
+        "total_output_time_s": 4.10509963601362,
+        "end_to_end_latency_s": 4.270105072064325,
+        "inter_token_latency_s": 0.009224943002277797,
+        "number_input_chars": 296,
+        "number_output_chars": 445,
+        "number_total_chars": 741,
+        "request_input_throughput_chars_per_s": 1793.8802931864632,
+        "request_output_throughput_chars_per_s": 108.40175378352829
+    },
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.19671637495048344,
+        "total_output_time_s": 4.064875057083555,
+        "end_to_end_latency_s": 4.261591432034038,
+        "inter_token_latency_s": 0.009175790196576872,
+        "number_input_chars": 319,
+        "number_output_chars": 443,
+        "number_total_chars": 762,
+        "request_input_throughput_chars_per_s": 1621.6240263694226,
+        "request_output_throughput_chars_per_s": 108.98243950401795
+    },
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.33656400290783495,
+        "total_output_time_s": 4.094795964076184,
+        "end_to_end_latency_s": 4.431359966984019,
+        "inter_token_latency_s": 0.009612197098770384,
+        "number_input_chars": 604,
+        "number_output_chars": 426,
+        "number_total_chars": 1030,
+        "request_input_throughput_chars_per_s": 1794.6066566286947,
+        "request_output_throughput_chars_per_s": 104.03448761240263
+    },
+    {
+        "error_code": null,
+        "error_msg": "",
+        "ttft_s": 0.30466129002161324,
+        "total_output_time_s": 4.119043094920926,
+        "end_to_end_latency_s": 4.423704384942539,
+        "inter_token_latency_s": 0.009173815356171327,
+        "number_input_chars": 654,
+        "number_output_chars": 449,
+        "number_total_chars": 1103,
+        "request_input_throughput_chars_per_s": 2146.646198319465,
+        "request_output_throughput_chars_per_s": 109.00590007267685
+    }
+]

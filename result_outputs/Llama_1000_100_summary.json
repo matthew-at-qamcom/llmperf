@@ -1,0 +1,18 @@
+{
+    "version": "2023-08-31",
+    "name": "Llama_1000_100_summary",
+    "model": "Llama",
+    "mean_input_tokens": 1000,
+    "stddev_input_tokens": 0,
+    "mean_output_tokens": 100,
+    "stddev_output_tokens": 0,
+    "num_concurrent_requests": 1,
+    "results_num_requests_started": 1,
+    "results_error_rate": 0.0,
+    "results_number_errors": 0,
+    "results_error_code_frequency": "{}",
+    "results_mean_output_throughput_token_per_s": 15.657011028082811,
+    "results_num_completed_requests": 1,
+    "results_num_completed_requests_per_min": 9.394206616849686,
+    "timestamp": 1741823802
+}
